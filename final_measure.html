@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Final Measurements</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue: #1a6fc4; --blue-light: #e8f0fb;
+    --green: #1a8a4a; --green-light: #e8f5ed;
+    --red: #c0392b; --red-light: #fdecea;
+    --orange: #b85c00; --orange-light: #fff3e8;
+    --border: #d0d0d0; --text: #1a1a1a; --muted: #666;
+    --radius: 12px; --tap: 54px;
+  }
+  html { font-size: 17px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #efefef; color: var(--text); padding-bottom: 4rem; }
+
+  header { background: var(--blue); color: #fff; padding: 1.1rem 1rem 1rem; }
+  header h1 { font-size: 1.2rem; font-weight: 600; }
+  header p { font-size: 0.8rem; opacity: 0.8; margin-top: 2px; }
+
+  .section { background: #fff; border-radius: var(--radius); margin: 1rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+  .section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.9rem; }
+  .field { margin-bottom: 0.9rem; }
+  .field:last-child { margin-bottom: 0; }
+  label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+  input, select, textarea { width: 100%; min-height: var(--tap); font-size: 1rem; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; color: var(--text); appearance: none; -webkit-appearance: none; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); }
+  textarea { padding: 12px 14px; min-height: 60px; resize: none; line-height: 1.5; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .divider { height: 1px; background: var(--border); margin: 0.9rem 0; }
+
+  /* Line cards */
+  .line-card { background: #fff; border-radius: var(--radius); margin: 0 1rem 0.75rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.07); border-left: 4px solid var(--blue); }
+  .line-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .line-num { font-size: 1.05rem; font-weight: 700; color: var(--blue); }
+  .del-btn { min-height: 44px; padding: 0 16px; border: 1.5px solid var(--red); background: var(--red-light); color: var(--red); border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+
+  /* Measurement row */
+  .meas-row { display: grid; grid-template-columns: 1fr 44px; gap: 6px; align-items: start; margin-bottom: 0.9rem; }
+  .meas-label { font-size: 0.82rem; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+  .meas-input { width: 100%; min-height: var(--tap); font-size: 1.1rem; font-weight: 600; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; color: var(--text); }
+  .meas-input:focus { outline: none; border-color: var(--blue); }
+  .mic-btn { min-height: var(--tap); width: 44px; border: 1.5px solid var(--blue); background: var(--blue-light); color: var(--blue); border-radius: 10px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; margin-top: 27px; }
+  .mic-btn.listening { background: var(--red-light); border-color: var(--red); color: var(--red); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .mic-heard { font-size: 0.75rem; margin-top: 4px; min-height: 16px; font-style: italic; color: var(--muted); }
+
+  /* Buttons */
+  .add-btn { display: block; width: calc(100% - 2rem); margin: 0 1rem 0.75rem; min-height: 58px; background: var(--blue-light); color: var(--blue); border: 2px dashed var(--blue); border-radius: var(--radius); font-size: 1.05rem; font-weight: 600; cursor: pointer; }
+  .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0.5rem 1rem 0; }
+  .save-btn { min-height: 56px; background: var(--green-light); color: var(--green); border: 1.5px solid var(--green); border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .load-btn { min-height: 56px; background: var(--orange-light); color: var(--orange); border: 1.5px solid var(--orange); border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .copy-btn { display: block; width: calc(100% - 2rem); margin: 0.75rem 1rem 0; min-height: 60px; background: var(--blue); color: #fff; border: none; border-radius: var(--radius); font-size: 1.1rem; font-weight: 700; cursor: pointer; }
+  .email-btn { display: block; width: calc(100% - 2rem); margin: 0.75rem 1rem 0; min-height: 56px; background: #fff8e8; color: #8a5a00; border: 1.5px solid #b87c00; border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .excel-btn { display: block; width: calc(100% - 2rem); margin: 0.75rem 1rem 0; min-height: 56px; background: var(--green-light); color: #1a6b2f; border: 1.5px solid #1a6b2f; border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .clear-btn { display: block; width: calc(100% - 2rem); margin: 0.75rem 1rem 0; min-height: 56px; background: var(--red-light); color: var(--red); border: 1.5px solid var(--red); border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .copy-btn:active,.save-btn:active,.load-btn:active,.clear-btn:active,.email-btn:active,.excel-btn:active { opacity:0.8; transform:scale(0.98); }
+
+  .output-box { display: none; margin: 1rem; background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1rem; font-family: monospace; font-size: 0.82rem; white-space: pre-wrap; line-height: 1.7; }
+
+  /* Saved Jobs Panel */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; }
+  .overlay.show { display: flex; align-items: flex-end; }
+  .panel { background: #fff; border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-height: 75vh; overflow-y: auto; padding: 1.25rem 1rem; }
+  .panel-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+  .saved-job { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 0; border-bottom: 1px solid var(--border); }
+  .saved-job:last-child { border-bottom: none; }
+  .saved-job-info { flex: 1; }
+  .saved-job-name { font-size: 0.95rem; font-weight: 600; }
+  .saved-job-meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .saved-job-btns { display: flex; gap: 8px; margin-left: 10px; }
+  .load-job-btn { min-height: 44px; padding: 0 14px; background: var(--blue-light); color: var(--blue); border: 1.5px solid var(--blue); border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+  .del-job-btn { min-height: 44px; padding: 0 14px; background: var(--red-light); color: var(--red); border: 1.5px solid var(--red); border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+  .close-panel-btn { display: block; width: 100%; min-height: 52px; margin-top: 1rem; background: #efefef; color: var(--text); border: none; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer; }
+  .no-jobs { text-align: center; color: var(--muted); padding: 2rem 0; font-size: 0.9rem; }
+
+  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 12px 24px; border-radius: 999px; font-size: 0.9rem; font-weight: 600; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Final Measurements</h1>
+  <p>Precise install measurements for manufacturer</p>
+</header>
+
+<!-- JOB INFO -->
+<div class="section">
+  <div class="section-title">Job Info</div>
+  <div class="row2">
+    <div class="field"><label>Job #</label><input type="text" id="jobNum" placeholder="8787788" inputmode="numeric"></div>
+    <div class="field"><label>Date</label><input type="date" id="jobDate"></div>
+  </div>
+  <div class="field"><label>Customer Name</label><input type="text" id="custName" placeholder="Last, First" autocomplete="off"></div>
+  <div class="field"><label>Phone</label><input type="tel" id="custPhone" placeholder="(941) 555-0000"></div>
+  <div class="field"><label>Address</label><input type="text" id="custAddr" placeholder="123 Main St, Parrish FL" autocomplete="off"></div>
+  <div class="divider"></div>
+  <div class="row2">
+    <div class="field"><label>Frame Color</label>
+      <select id="frameColor">
+        <option value="">-- color --</option>
+        <option>White</option><option>Bronze</option><option>Almond</option><option>Black</option><option>Bronze/White</option><option>Custom</option>
+      </select>
+    </div>
+    <div class="field"><label>Frame Type</label>
+      <select id="frameType">
+        <option value="">-- type --</option>
+        <option>Vinyl</option><option>Aluminum</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- LINE ITEMS -->
+<div id="lineList"></div>
+
+<button class="add-btn" onclick="addLine()">+ Add Line</button>
+
+<div class="action-row">
+  <button class="save-btn" onclick="saveJob()">Save Job</button>
+  <button class="load-btn" onclick="openPanel()">Load Job</button>
+</div>
+<button class="copy-btn" onclick="generateOutput()">Copy Summary</button>
+<button class="email-btn" onclick="emailJob()">Email Measurements</button>
+<button class="excel-btn" onclick="downloadCSV()">Download Excel / CSV</button>
+<button class="clear-btn" onclick="clearAll()">Clear / New Job</button>
+<div class="output-box" id="output"></div>
+
+<!-- Saved Jobs Panel -->
+<div class="overlay" id="overlay" onclick="closePanelClick(event)">
+  <div class="panel">
+    <div class="panel-title">Saved Jobs</div>
+    <div id="savedList"></div>
+    <button class="close-panel-btn" onclick="closeOverlay()">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let lineCount = 0;
+
+const configs = ['-- config --','Hold Out','OBS','OX','XO','SS','RS','FL','IF','LHOS','RHOS','LHIS','RHIS','Custom'];
+
+function configOpts() {
+  return configs.map((c,i) => `<option value="${i===0?'':c}">${c}</option>`).join('');
+}
+
+function addLine(data) {
+  lineCount++;
+  const id = lineCount;
+  const div = document.createElement('div');
+  div.className = 'line-card';
+  div.id = 'line-' + id;
+  div.innerHTML = `
+    <div class="line-header">
+      <span class="line-num">Line ${id}</span>
+      <div style="display:flex;gap:8px;align-items:center;flex:1;margin-left:10px;">
+        <input type="text" id="l${id}-label" placeholder="Label..." autocomplete="off" style="min-height:44px;font-size:0.9rem;border-radius:10px;border:1.5px solid var(--border);padding:0 10px;flex:1;">
+        <button class="del-btn" onclick="removeLine(${id})">Remove</button>
+      </div>
+    </div>
+
+    <div class="row2" style="margin-bottom:0.9rem;">
+      <div>
+        <div class="meas-label">Width</div>
+        <div class="meas-row">
+          <input class="meas-input" type="text" id="l${id}-w" placeholder='e.g. 36.375"' inputmode="decimal">
+          <button class="mic-btn" id="l${id}-wmic" onclick="startVoice(${id},'w')" title="Speak width">🎤</button>
+        </div>
+        <div class="mic-heard" id="l${id}-wheard"></div>
+      </div>
+      <div>
+        <div class="meas-label">Height</div>
+        <div class="meas-row">
+          <input class="meas-input" type="text" id="l${id}-h" placeholder='e.g. 49.5"' inputmode="decimal">
+          <button class="mic-btn" id="l${id}-hmic" onclick="startVoice(${id},'h')" title="Speak height">🎤</button>
+        </div>
+        <div class="mic-heard" id="l${id}-hheard"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="meas-label">Leg Height</div>
+      <div class="meas-row">
+        <input class="meas-input" type="text" id="l${id}-leg" placeholder='e.g. 24.5"' inputmode="decimal">
+        <button class="mic-btn" id="l${id}-legmic" onclick="startVoice(${id},'leg')" title="Speak leg height">🎤</button>
+      </div>
+      <div class="mic-heard" id="l${id}-legheard"></div>
+    </div>
+
+    <div class="row2" style="margin-bottom:0.9rem;">
+      <div class="field" style="margin-bottom:0;">
+        <label>Config 1</label>
+        <select id="l${id}-config">${configOpts()}</select>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Config 2</label>
+        <select id="l${id}-config2">${configOpts()}</select>
+      </div>
+    </div>
+
+    <div class="field">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+        <label style="margin-bottom:0;">Notes</label>
+        <button class="mic-btn" style="min-height:36px;width:36px;font-size:1rem;" onclick="startNoteVoice('l'+${id}+'-notes','l'+${id}+'-nheard')">🎤</button>
+      </div>
+      <textarea id="l${id}-notes" placeholder="Room, special instructions..."></textarea>
+      <div class="mic-heard" id="l${id}-nheard"></div>
+    </div>
+  `;
+  document.getElementById('lineList').appendChild(div);
+
+  if (data) {
+    set('l'+id+'-w', data.w);
+    set('l'+id+'-h', data.h);
+    set('l'+id+'-label', data.label);
+    set('l'+id+'-config', data.config);
+    set('l'+id+'-config2', data.config2);
+    set('l'+id+'-leg', data.leg);
+    set('l'+id+'-notes', data.notes);
+  } else {
+    div.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+function removeLine(id) {
+  const el = document.getElementById('line-'+id);
+  if (el) el.remove();
+}
+
+function set(id, val) {
+  const el = document.getElementById(id);
+  if (el && val !== undefined && val !== null) el.value = val;
+}
+
+function g(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+// ---- VOICE ----
+function startVoice(id, dim) {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Voice not supported on this browser'); return;
+  }
+  const btnId = 'l'+id+'-'+dim+'mic';
+  const heardId = 'l'+id+'-'+dim+'heard';
+  const inputId = 'l'+id+'-'+dim;
+  const btn   = document.getElementById(btnId);
+  const heard = document.getElementById(heardId);
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = 'en-US';
+  rec.interimResults = false;
+  rec.continuous = false;
+  rec.maxAlternatives = 1;
+
+  let stopped = false;
+
+  // Tap button again to stop manually
+  btn.onclick = function() {
+    if (!stopped) { stopped = true; rec.stop(); }
+    else { startVoice(id, dim); }
+  };
+
+  btn.textContent = '⏹';
+  btn.classList.add('listening');
+  heard.textContent = 'Listening... tap to stop';
+  heard.style.color = 'var(--muted)';
+
+  rec.onresult = function(e) {
+    if (stopped) return;
+    stopped = true;
+    const transcript = e.results[0][0].transcript;
+    rec.stop();
+    const val = parseSingleMeasurement(transcript.toLowerCase());
+    if (val !== null) {
+      document.getElementById(inputId).value = val;
+      heard.textContent = '"' + transcript + '" → ' + val + '"';
+      heard.style.color = 'var(--green)';
+    } else {
+      heard.textContent = '"' + transcript + '" — enter manually';
+      heard.style.color = 'var(--red)';
+    }
+  };
+
+  rec.onerror = function(e) {
+    if (stopped) return;
+    stopped = true;
+    heard.textContent = e.error === 'no-speech' ? 'No speech — try again' : 'Could not hear — try again';
+    heard.style.color = 'var(--red)';
+    btn.textContent = '🎤';
+    btn.classList.remove('listening');
+    btn.onclick = function() { startVoice(id, dim); };
+  };
+
+  rec.onend = function() {
+    btn.textContent = '🎤';
+    btn.classList.remove('listening');
+    btn.onclick = function() { startVoice(id, dim); };
+  };
+
+  rec.start();
+}
+
+function parseSingleMeasurement(text) {
+  const fracs = [
+    { words: ['and seven eighths','and 7/8','7/8'], val: 0.875 },
+    { words: ['and five eighths','and 5/8','5/8'], val: 0.625 },
+    { words: ['and three eighths','and 3/8','3/8'], val: 0.375 },
+    { words: ['and one eighth','and an eighth','and 1/8','1/8'], val: 0.125 },
+    { words: ['and three quarters','and three quarter','and 3/4','3/4'], val: 0.75 },
+    { words: ['and one quarter','and a quarter','and 1/4','1/4'], val: 0.25 },
+    { words: ['and a half','and one half','and 1/2','1/2'], val: 0.5 },
+    { words: ['seven eighths'], val: 0.875 },
+    { words: ['five eighths'], val: 0.625 },
+    { words: ['three eighths'], val: 0.375 },
+    { words: ['one eighth','an eighth'], val: 0.125 },
+    { words: ['three quarters','three quarter'], val: 0.75 },
+    { words: ['one quarter','a quarter'], val: 0.25 },
+    { words: ['a half','one half'], val: 0.5 },
+  ];
+
+  let frac = 0;
+  let clean = text.trim();
+  for (const f of fracs) {
+    for (const w of f.words) {
+      if (clean.includes(w)) { frac = f.val; clean = clean.replace(w,'').trim(); break; }
+    }
+    if (frac) break;
+  }
+
+  const m = clean.match(/(\d+)/);
+  const whole = m ? parseInt(m[1]) : 0;
+  const result = whole + frac;
+  if (result === 0) return null;
+  return Math.round(result * 8) / 8;
+}
+
+// ---- SAVE / LOAD / CLEAR ----
+function collectData() {
+  const lines = [];
+  for (let i = 1; i <= lineCount; i++) {
+    if (!document.getElementById('line-'+i)) continue;
+    lines.push({ label: g('l'+i+'-label'), w: g('l'+i+'-w'), h: g('l'+i+'-h'), config: g('l'+i+'-config'), config2: g('l'+i+'-config2'), leg: g('l'+i+'-leg'), notes: g('l'+i+'-notes') });
+  }
+  return { jobNum: g('jobNum'), jobDate: g('jobDate'), custName: g('custName'), custPhone: g('custPhone'), custAddr: g('custAddr'), frameColor: g('frameColor'), frameType: g('frameType'), lines, savedAt: new Date().toLocaleString() };
+}
+
+function saveJob() {
+  const data = collectData();
+  const key = 'fm_' + (data.jobNum || Date.now());
+  localStorage.setItem(key, JSON.stringify(data));
+  showToast('Job saved!');
+}
+
+function getSaved() {
+  const jobs = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('fm_')) { try { jobs.push({key:k, data:JSON.parse(localStorage.getItem(k))}); } catch(e){} }
+  }
+  return jobs.sort((a,b) => a.data.savedAt < b.data.savedAt ? 1 : -1);
+}
+
+function openPanel() {
+  const jobs = getSaved();
+  const list = document.getElementById('savedList');
+  if (jobs.length === 0) { list.innerHTML = '<div class="no-jobs">No saved jobs yet</div>'; }
+  else {
+    list.innerHTML = jobs.map(j => `
+      <div class="saved-job">
+        <div class="saved-job-info">
+          <div class="saved-job-name">${j.data.custName||'No name'} &mdash; #${j.data.jobNum||'—'}</div>
+          <div class="saved-job-meta">${(j.data.lines||[]).length} line(s) &nbsp;&middot;&nbsp; ${j.data.savedAt}</div>
+        </div>
+        <div class="saved-job-btns">
+          <button class="load-job-btn" onclick="loadJob('${j.key}')">Load</button>
+          <button class="del-job-btn" onclick="deleteJob('${j.key}')">Del</button>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('overlay').classList.add('show');
+}
+
+function loadJob(key) {
+  const raw = localStorage.getItem(key);
+  if (!raw) return;
+  const data = JSON.parse(raw);
+  resetForm();
+  set('jobNum',data.jobNum); set('jobDate',data.jobDate);
+  set('custName',data.custName); set('custPhone',data.custPhone);
+  set('custAddr',data.custAddr); set('frameColor',data.frameColor); set('frameType',data.frameType);
+  (data.lines||[]).forEach(l => addLine(l));
+  closeOverlay();
+  showToast('Job loaded!');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function deleteJob(key) {
+  if (!confirm('Delete this saved job?')) return;
+  localStorage.removeItem(key);
+  openPanel();
+}
+
+function closePanelClick(e) { if (e.target===document.getElementById('overlay')) closeOverlay(); }
+function closeOverlay() { document.getElementById('overlay').classList.remove('show'); }
+
+function clearAll() {
+  if (!confirm('Clear everything and start a new job?')) return;
+  resetForm();
+  showToast('Ready for new job');
+}
+
+function resetForm() {
+  ['jobNum','jobDate','custName','custPhone','custAddr','frameColor','frameType'].forEach(id => set(id,''));
+  document.getElementById('lineList').innerHTML = '';
+  document.getElementById('output').style.display = 'none';
+  lineCount = 0;
+  addLine();
+  document.getElementById('jobDate').valueAsDate = new Date();
+}
+
+function generateOutput() {
+  const data = collectData();
+  let out = '=== Final Measurements ===\n';
+  out += `Job #:    ${data.jobNum||'—'}\n`;
+  out += `Date:     ${data.jobDate||'—'}\n`;
+  out += `Customer: ${data.custName||'—'}\n`;
+  out += `Phone:    ${data.custPhone||'—'}\n`;
+  out += `Address:  ${data.custAddr||'—'}\n`;
+  out += `Color:    ${data.frameColor||'—'}  |  Type: ${data.frameType||'—'}\n`;
+  out += '\n--- Line Items ---\n';
+  data.lines.forEach((l,i) => {
+    out += `\nLine ${i+1}${l.label?' ('+l.label+')':''}:  ${l.w?l.w+'"':'—'} W  x  ${l.h?l.h+'"':'—'} H`;
+    if (l.config)  out += `  |  ${l.config}`;
+    if (l.config2) out += `  /  ${l.config2}`;
+    if (l.leg)     out += `  |  Leg: ${l.leg}"`;
+    if (l.notes)  out += `\n         Notes: ${l.notes}`;
+    out += '\n';
+  });
+  const box = document.getElementById('output');
+  box.style.display = 'block'; box.textContent = out;
+  if (navigator.clipboard) navigator.clipboard.writeText(out).then(()=>showToast('Copied!')).catch(()=>showToast('Done!'));
+}
+
+function emailJob() {
+  const data = collectData();
+  const subject = encodeURIComponent(`Final Measurements — ${data.custName||'Job'} #${data.jobNum||''}`);
+  let body = '=== Final Measurements ===\n';
+  body += `Job #:    ${data.jobNum||'—'}\nDate:     ${data.jobDate||'—'}\nCustomer: ${data.custName||'—'}\nPhone:    ${data.custPhone||'—'}\nAddress:  ${data.custAddr||'—'}\n\n--- Line Items ---\n`;
+  data.lines.forEach((l,i) => {
+    body += `\nLine ${i+1}${l.label?' ('+l.label+')':''}:  ${l.w?l.w+'"':'—'} W  x  ${l.h?l.h+'"':'—'} H`;
+    if (l.config)  body += `  |  ${l.config}`;
+    if (l.config2) body += `  /  ${l.config2}`;
+    if (l.leg)     body += `  |  Leg: ${l.leg}"`;
+    if (l.notes)  body += `\n         Notes: ${l.notes}`;
+    body += '\n';
+  });
+  window.location.href = `mailto:?subject=${subject}&body=${encodeURIComponent(body)}`;
+}
+
+function downloadCSV() {
+  const data = collectData();
+  const headers = ['Line #','Width','Height','Configuration','Notes'];
+  const jobInfo = [
+    ['Job #', data.jobNum||''],
+    ['Date', data.jobDate||''],
+    ['Customer', data.custName||''],
+    ['Phone', data.custPhone||''],
+    ['Address', data.custAddr||''],
+    ['Frame Color', data.frameColor||''],
+    ['Frame Type', data.frameType||''],
+    [],
+    headers,
+    ...data.lines.map((l,i) => [i+1, l.label||'', l.w?l.w+'"':'', l.h?l.h+'"':'', l.config||'', l.config2||'', l.leg?l.leg+'"':'', l.notes||''])
+  ];
+  const csv = jobInfo.map(row => row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const name = `FinalMeasurements_${(data.custName||'job').replace(/\s+/g,'_')}_${data.jobNum||''}.csv`;
+  if (navigator.share && navigator.canShare && navigator.canShare({files:[new File([blob],name,{type:'text/csv'})]})) {
+    navigator.share({files:[new File([blob],name,{type:'text/csv'})], title:name}).then(()=>showToast('Shared!')).catch(()=>triggerDownload(url,name));
+  } else { triggerDownload(url, name); }
+}
+
+function triggerDownload(url, name) {
+  const a = document.createElement('a');
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showToast('CSV downloaded!');
+}
+
+function startNoteVoice(inputId, heardId) {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Voice not supported on this browser'); return;
+  }
+  const heard = document.getElementById(heardId);
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = 'en-US';
+  rec.interimResults = false;
+  rec.continuous = false;
+  rec.maxAlternatives = 1;
+  let stopped = false;
+
+  if (heard) { heard.textContent = 'Listening... tap mic to stop'; heard.style.color = 'var(--muted)'; }
+
+  rec.onresult = function(e) {
+    if (stopped) return;
+    stopped = true;
+    const transcript = e.results[0][0].transcript;
+    rec.stop();
+    const el = document.getElementById(inputId);
+    if (el) {
+      el.value = el.value ? el.value + ' ' + transcript : transcript;
+    }
+    if (heard) { heard.textContent = '"' + transcript + '"'; heard.style.color = 'var(--green)'; }
+  };
+
+  rec.onerror = function() {
+    stopped = true;
+    if (heard) { heard.textContent = 'Could not hear — try again'; heard.style.color = 'var(--red)'; }
+  };
+
+  rec.onend = function() {
+    if (!stopped && heard) { heard.textContent = ''; }
+  };
+
+  rec.start();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// Init with 1 line
+document.getElementById('jobDate').valueAsDate = new Date();
+addLine();
+</script>
+</body>
+</html>
