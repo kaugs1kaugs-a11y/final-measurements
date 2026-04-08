@@ -57,6 +57,7 @@
   .copy-btn { display: block; width: calc(100% - 2rem); margin: 0.75rem 1rem 0; min-height: 60px; background: var(--blue); color: #fff; border: none; border-radius: var(--radius); font-size: 1.1rem; font-weight: 700; cursor: pointer; }
   .email-btn { display: block; width: calc(100% - 2rem); margin: 0.75rem 1rem 0; min-height: 56px; background: #fff8e8; color: #8a5a00; border: 1.5px solid #b87c00; border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer; }
   .excel-btn { display: block; width: calc(100% - 2rem); margin: 0.75rem 1rem 0; min-height: 56px; background: var(--green-light); color: #1a6b2f; border: 1.5px solid #1a6b2f; border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .word-btn { display: block; width: calc(100% - 2rem); margin: 0.75rem 1rem 0; min-height: 56px; background: #e8eefb; color: #1a3fc4; border: 1.5px solid #1a3fc4; border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer; }
   .clear-btn { display: block; width: calc(100% - 2rem); margin: 0.75rem 1rem 0; min-height: 56px; background: var(--red-light); color: var(--red); border: 1.5px solid var(--red); border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer; }
   .copy-btn:active,.save-btn:active,.load-btn:active,.clear-btn:active,.email-btn:active,.excel-btn:active { opacity:0.8; transform:scale(0.98); }
 
@@ -128,6 +129,7 @@
 <button class="copy-btn" onclick="generateOutput()">Copy Summary</button>
 <button class="email-btn" onclick="emailJob()">Email Measurements</button>
 <button class="excel-btn" onclick="downloadCSV()">Download Excel / CSV</button>
+<button class="word-btn" onclick="downloadWord()">Download Word Doc</button>
 <button class="clear-btn" onclick="clearAll()">Clear / New Job</button>
 <div class="output-box" id="output"></div>
 
@@ -154,12 +156,13 @@ function configOpts() {
 function addLine(data) {
   lineCount++;
   const id = lineCount;
+  const displayNum = document.querySelectorAll('.line-card').length + 1;
   const div = document.createElement('div');
   div.className = 'line-card';
   div.id = 'line-' + id;
   div.innerHTML = `
     <div class="line-header">
-      <span class="line-num">Line ${id}</span>
+      <span class="line-num">Line ${displayNum}</span>
       <div style="display:flex;gap:8px;align-items:center;flex:1;margin-left:10px;">
         <input type="text" id="l${id}-label" placeholder="Label..." autocomplete="off" style="min-height:44px;font-size:0.9rem;border-radius:10px;border:1.5px solid var(--border);padding:0 10px;flex:1;">
         <button class="del-btn" onclick="removeLine(${id})">Remove</button>
@@ -215,6 +218,7 @@ function addLine(data) {
     </div>
   `;
   document.getElementById('lineList').appendChild(div);
+  autoSave();
 
   if (data) {
     set('l'+id+'-w', data.w);
@@ -232,6 +236,18 @@ function addLine(data) {
 function removeLine(id) {
   const el = document.getElementById('line-'+id);
   if (el) el.remove();
+  renumberLines();
+  autoSave();
+}
+
+function renumberLines() {
+  const cards = document.querySelectorAll('.line-card');
+  cards.forEach((card, i) => {
+    const num = i + 1;
+    const label = card.querySelector('.line-num');
+    if (label) label.textContent = 'Line ' + num;
+  });
+  autoSave();
 }
 
 function set(id, val) {
@@ -346,10 +362,10 @@ function parseSingleMeasurement(text) {
 // ---- SAVE / LOAD / CLEAR ----
 function collectData() {
   const lines = [];
-  for (let i = 1; i <= lineCount; i++) {
-    if (!document.getElementById('line-'+i)) continue;
-    lines.push({ label: g('l'+i+'-label'), w: g('l'+i+'-w'), h: g('l'+i+'-h'), config: g('l'+i+'-config'), config2: g('l'+i+'-config2'), leg: g('l'+i+'-leg'), notes: g('l'+i+'-notes') });
-  }
+  document.querySelectorAll('.line-card').forEach(card => {
+    const cid = card.id.replace('line-','');
+    lines.push({ label: g('l'+cid+'-label'), w: g('l'+cid+'-w'), h: g('l'+cid+'-h'), config: g('l'+cid+'-config'), config2: g('l'+cid+'-config2'), leg: g('l'+cid+'-leg'), notes: g('l'+cid+'-notes') });
+  });
   return { jobNum: g('jobNum'), jobDate: g('jobDate'), custName: g('custName'), custPhone: g('custPhone'), custAddr: g('custAddr'), frameColor: g('frameColor'), frameType: g('frameType'), lines, savedAt: new Date().toLocaleString() };
 }
 
@@ -423,6 +439,7 @@ function resetForm() {
   document.getElementById('lineList').innerHTML = '';
   document.getElementById('output').style.display = 'none';
   lineCount = 0;
+  localStorage.removeItem('fm_auto_autosave');
   addLine();
   document.getElementById('jobDate').valueAsDate = new Date();
 }
@@ -538,6 +555,97 @@ function startNoteVoice(inputId, heardId) {
   rec.start();
 }
 
+function restoreJobData(data) {
+  if (!data) return;
+  set('jobNum', data.jobNum); set('jobDate', data.jobDate);
+  set('custName', data.custName); set('custPhone', data.custPhone);
+  set('custAddr', data.custAddr); set('frameColor', data.frameColor);
+  set('frameType', data.frameType);
+  document.getElementById('lineList').innerHTML = '';
+  lineCount = 0;
+  (data.lines||[]).forEach(l => addLine(l));
+}
+
+function autoSave() {
+  try {
+    const data = collectData();
+    localStorage.setItem('fm_auto_autosave', JSON.stringify(data));
+  } catch(e) {}
+}
+
+function restoreAutosave() {
+  try {
+    const raw = localStorage.getItem('fm_auto_autosave');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    restoreJobData(data);
+  } catch(e) {}
+}
+
+function downloadWord() {
+  const data = collectData();
+  const name = data.custName || 'Job';
+  const jobNum = data.jobNum || '';
+  const date = data.jobDate || new Date().toLocaleDateString();
+
+  let html = `
+    <html><head><meta charset="UTF-8">
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 11pt; margin: 1in; }
+      h1 { font-size: 16pt; margin-bottom: 4px; }
+      h2 { font-size: 13pt; margin-top: 20px; margin-bottom: 6px; border-bottom: 1px solid #333; padding-bottom: 4px; }
+      .job-info { margin-bottom: 16px; }
+      .job-info p { margin: 3px 0; font-size: 11pt; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      th { background: #1a6fc4; color: white; padding: 8px 10px; text-align: left; font-size: 10pt; }
+      td { padding: 7px 10px; border-bottom: 1px solid #ddd; font-size: 10pt; vertical-align: top; }
+      tr:nth-child(even) { background: #f5f8ff; }
+      .line-num { font-weight: bold; color: #1a6fc4; }
+      .footer { margin-top: 30px; font-size: 9pt; color: #888; }
+    </style></head><body>
+    <h1>Final Measurements</h1>
+    <div class="job-info">
+      <p><strong>Job #:</strong> ${data.jobNum||'—'} &nbsp;&nbsp; <strong>Date:</strong> ${date}</p>
+      <p><strong>Customer:</strong> ${data.custName||'—'} &nbsp;&nbsp; <strong>Phone:</strong> ${data.custPhone||'—'}</p>
+      <p><strong>Address:</strong> ${data.custAddr||'—'}</p>
+      <p><strong>Frame Color:</strong> ${data.frameColor||'—'} &nbsp;&nbsp; <strong>Frame Type:</strong> ${data.frameType||'—'}</p>
+    </div>
+    <h2>Line Items</h2>
+    <table>
+      <tr>
+        <th>#</th><th>Label</th><th>Width</th><th>Height</th><th>Leg</th><th>Config 1</th><th>Config 2</th><th>Notes</th>
+      </tr>
+  `;
+
+  data.lines.forEach((l, i) => {
+    html += `<tr>
+      <td class="line-num">${i+1}</td>
+      <td>${l.label||''}</td>
+      <td><strong>${l.w||'—'}</strong></td>
+      <td><strong>${l.h||'—'}</strong></td>
+      <td>${l.leg||''}</td>
+      <td>${l.config||''}</td>
+      <td>${l.config2||''}</td>
+      <td>${l.notes||''}</td>
+    </tr>`;
+  });
+
+  html += `</table>
+    <div class="footer">Generated by Final Measurements App &nbsp;|&nbsp; ${new Date().toLocaleString()}</div>
+    </body></html>`;
+
+  const blob = new Blob([html], {type: 'application/msword'});
+  const url = URL.createObjectURL(blob);
+  const filename = 'FinalMeasurements_' + (data.custName||'job').replace(/\s+/g,'_') + '_' + (data.jobNum||'') + '.doc';
+  const isIphone = /iphone|ipad/i.test(navigator.userAgent);
+  if (isIphone && navigator.share) {
+    const file = new File([blob], filename, {type:'application/msword'});
+    navigator.share({files:[file], title:filename}).then(()=>showToast('Word doc shared!')).catch(()=>triggerDownload(url,filename));
+  } else {
+    triggerDownload(url, filename);
+  }
+}
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -546,7 +654,20 @@ function showToast(msg) {
 
 // Init with 1 line
 document.getElementById('jobDate').valueAsDate = new Date();
-addLine();
+// Autosave on any input change
+document.querySelectorAll('input, select, textarea').forEach(el => {
+  el.addEventListener('change', autoSave);
+  el.addEventListener('input', autoSave);
+});
+const _as = localStorage.getItem('fm_auto_autosave');
+if (_as) {
+  try {
+    const _d = JSON.parse(_as);
+    if (_d.lines && _d.lines.length > 0) {
+      restoreJobData(_d);
+    } else { addLine(); }
+  } catch(e) { addLine(); }
+} else { addLine(); }
 </script>
 </body>
 </html>
